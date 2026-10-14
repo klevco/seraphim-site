@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Страница ничего не отправляет: сеть, формы и фреймы запрещены самим браузером (connect-src 'none', form-action 'none'). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' file:; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; form-action 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#FAF6EF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#191714" media="(prefers-color-scheme: dark)">
+<meta name="format-detection" content="telephone=no">
+<meta name="description" content="Три коротких шага про вчерашний день ребёнка — и видно, где часы расходятся с нормами. Всё считается на телефоне, данные никуда не уходят.">
+<title>Разбор дня</title>
+<style>
+  :root {
+    --bg: #FAF6EF;
+    --surface: #FFFFFF;
+    --surface-2: #F3EDE3;
+    --ink: #27231F;
+    --ink-2: #4F473F;
+    --muted: #6F665A;
+    --line: #E3D8C8;
+    --field-line: #968874; /* рамка полей и кнопок-вариантов: 3,46:1 на белом (WCAG 1.4.11) */
+    --accent: #2E6A57;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #E4EFE9;
+    --gold: #8A6316;
+    --gold-soft: #F6ECD6;
+    --off: #A3482A;
+    --off-soft: #F8E8E0;
+    --shadow: 0 1px 2px rgba(39, 35, 31, .06), 0 6px 20px rgba(39, 35, 31, .05);
+    --radius: 18px;
+    --serif: "PT Serif", Georgia, "Noto Serif", "Times New Roman", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #191714;
+      --surface: #23201C;
+      --surface-2: #2C2823;
+      --ink: #F2ECE3;
+      --ink-2: #D3C9BC;
+      --muted: #A89D90;
+      --line: #3B352E;
+      --field-line: #7D7264; /* 3,45:1 на #23201C */
+      --accent: #74BC9F;
+      --accent-ink: #0F211A;
+      --accent-soft: #1E3029;
+      --gold: #DDB467;
+      --gold-soft: #302716;
+      --off: #EA9273;
+      --off-soft: #36241D;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 20px rgba(0, 0, 0, .25);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #191714;
+    --surface: #23201C;
+    --surface-2: #2C2823;
+    --ink: #F2ECE3;
+    --ink-2: #D3C9BC;
+    --muted: #A89D90;
+    --line: #3B352E;
+    --field-line: #7D7264;
+    --accent: #74BC9F;
+    --accent-ink: #0F211A;
+    --accent-soft: #1E3029;
+    --gold: #DDB467;
+    --gold-soft: #302716;
+    --off: #EA9273;
+    --off-soft: #36241D;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 20px rgba(0, 0, 0, .25);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 18px/1.5 var(--sans);
+    overflow-x: hidden;
+  }
+  .wrap {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 14px 16px calc(40px + env(safe-area-inset-bottom));
+  }
+  h1, h2, h3 { font-family: var(--serif); font-weight: 700; line-height: 1.2; margin: 0; }
+  p { margin: 0; }
+  a { color: var(--accent); text-underline-offset: 2px; }
+  button { font: inherit; color: inherit; }
+  [hidden] { display: none !important; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* Шапка */
+  .who { display: flex; align-items: center; gap: 14px; }
+  .ava {
+    width: 56px; height: 56px; border-radius: 50%; flex: none;
+    object-fit: cover; background: var(--surface-2);
+    box-shadow: 0 0 0 3px var(--surface), 0 0 0 4px var(--line);
+  }
+  .who-name { font-weight: 650; font-size: 17px; }
+  .who-role { color: var(--muted); font-size: 15px; }
+  /* Первый экран 375×667: верх первого ряда кнопок должен быть виден без прокрутки */
+  h1 { font-size: 30px; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .lede { font-size: 17px; line-height: 1.45; color: var(--ink-2); }
+
+  .honest {
+    margin-top: 12px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: var(--gold-soft);
+    color: var(--ink-2);
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  .honest strong { color: var(--ink); font-weight: 600; }
+  .privacy { margin-top: 6px; font-size: 14px; color: var(--muted); }
+
+  /* Анкета */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px 16px 22px;
+    margin-top: 16px;
+  }
+  .progress { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .progress-text { font-size: 15px; color: var(--muted); white-space: nowrap; }
+  .bars { display: flex; gap: 6px; flex: 1; }
+  .bars span { height: 6px; flex: 1; border-radius: 3px; background: var(--surface-2); }
+  .bars span.on { background: var(--accent); }
+  .step h2 { font-size: 26px; margin-bottom: 4px; outline: none; }
+  .step-sub { color: var(--muted); font-size: 16px; margin-bottom: 6px; }
+
+  fieldset { border: 0; padding: 0; margin: 20px 0 0; min-width: 0; }
+  legend, .q { font-weight: 650; font-size: 18px; padding: 0; margin-bottom: 10px; }
+  .hint { color: var(--muted); font-size: 15px; margin: -4px 0 10px; }
+  .chips { display: grid; gap: 8px; }
+  .cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .cols-5 { grid-template-columns: repeat(5, 1fr); }
+  .chip {
+    min-height: 56px;
+    padding: 8px 6px;
+    border-radius: 14px;
+    border: 1.5px solid var(--field-line);
+    background: var(--surface);
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color .15s, border-color .15s, color .15s;
+  }
+  .chip.small { font-size: 17px; }
+  .chip:hover { border-color: var(--accent); }
+  .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .chip:focus-visible, .btn:focus-visible, input:focus-visible, .toggle:focus-visible {
+    outline: 3px solid var(--accent); outline-offset: 2px;
+  }
+
+  .times { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .time { display: block; }
+  .time .lbl { display: block; font-size: 15px; color: var(--muted); margin-bottom: 6px; }
+  .field { position: relative; display: block; }
+  input[type="time"] {
+    display: block;
+    width: 100%;
+    min-height: 58px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: 1.5px solid var(--field-line);
+    background: var(--surface);
+    color: var(--ink);
+    font: 600 22px/1.2 var(--sans);
+    font-variant-numeric: tabular-nums;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input[type="time"]::-webkit-date-and-time-value { text-align: left; }
+  input[type="time"]:disabled { opacity: .45; }
+  input[aria-invalid="true"], .chips[aria-invalid="true"] .chip { border-color: var(--off); }
+  /* На iPhone пустое поле времени ничего не показывает — рисуем подсказку сами */
+  .ph { display: none; }
+  @supports (-webkit-touch-callout: none) {
+    .ph {
+      display: block; position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+      color: var(--muted); font: 600 22px/1 var(--sans); pointer-events: none;
+    }
+    .field.has-value .ph, .field.is-disabled .ph { display: none; }
+  }
+
+  .toggle {
+    display: flex; align-items: center; gap: 12px;
+    width: 100%; margin-top: 12px; min-height: 52px; padding: 10px 14px;
+    border-radius: 14px; border: 1.5px dashed var(--line); background: transparent;
+    font-size: 17px; text-align: left; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .toggle .box {
+    width: 24px; height: 24px; flex: none; border-radius: 7px; border: 2px solid var(--muted);
+    display: grid; place-items: center; font-size: 16px; line-height: 1; color: transparent;
+  }
+  .toggle[aria-pressed="true"] { border-style: solid; border-color: var(--accent); background: var(--accent-soft); }
+  .toggle[aria-pressed="true"] .box { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+  .err { color: var(--off); font-size: 16px; margin-top: 16px; }
+  .err:empty { display: none; }
+  .err p + p { margin-top: 4px; }
+
+  .nav { display: flex; gap: 10px; margin-top: 24px; }
+  .btn {
+    min-height: 56px; padding: 12px 20px; border-radius: 14px; border: 0;
+    font-size: 18px; font-weight: 650; cursor: pointer; touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn.primary { flex: 1; background: var(--accent); color: var(--accent-ink); }
+  .btn.ghost { background: var(--surface-2); color: var(--ink); }
+  .btn.wide { width: 100%; }
+
+  /* Результат */
+  .result h2 { font-size: 30px; outline: none; }
+  .profile { margin-top: 6px; font-weight: 600; color: var(--ink-2); }
+  .facts { margin-top: 4px; font-size: 16px; color: var(--muted); }
+  .notice {
+    margin-top: 16px; padding: 12px 14px; border-radius: 12px;
+    background: var(--surface-2); color: var(--ink-2); font-size: 16px;
+  }
+  .sec { font-size: 22px; margin: 26px 0 12px; }
+  .issues { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .issue {
+    position: relative;
+    padding: 16px 16px 16px 58px;
+    border-radius: 16px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+  }
+  .issue .num {
+    position: absolute; left: 16px; top: 16px;
+    width: 30px; height: 30px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--off-soft); color: var(--off);
+    font-weight: 700; font-size: 16px;
+  }
+  .issue h3 { font-family: var(--sans); font-size: 18px; font-weight: 700; line-height: 1.3; }
+  .row { margin-top: 10px; display: grid; gap: 2px; }
+  .row .k { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 650; }
+  .row .v { font-size: 17px; }
+  .row.target .v { color: var(--accent); font-weight: 600; }
+  .issue .note { margin-top: 10px; font-size: 16px; color: var(--ink-2); }
+  .src { margin-top: 10px; font-size: 14px; color: var(--muted); }
+  .src a { color: var(--muted); }
+  .more { margin-top: 10px; font-size: 15px; color: var(--muted); }
+
+  .teacher {
+    margin-top: 14px; padding: 14px 16px; border-radius: 14px;
+    border-left: 4px solid var(--off); background: var(--off-soft); font-size: 17px;
+  }
+  .guilt {
+    margin-top: 18px; padding: 16px; border-radius: 16px;
+    background: var(--accent-soft); color: var(--ink);
+    font-family: var(--serif); font-size: 21px; line-height: 1.35;
+  }
+  .good {
+    margin-top: 18px; padding: 20px 16px; border-radius: 16px;
+    background: var(--accent-soft);
+  }
+  .good h3 { font-size: 26px; color: var(--accent); }
+  .good p { margin-top: 8px; font-size: 18px; color: var(--ink-2); }
+
+  .action {
+    margin-top: 18px; padding: 18px 16px; border-radius: 16px;
+    background: var(--surface); border: 2px solid var(--accent);
+  }
+  .kicker { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; color: var(--accent); }
+  .action-text { margin-top: 6px; font-size: 19px; line-height: 1.45; }
+
+  .checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .checks li { display: grid; grid-template-columns: 28px 1fr; gap: 8px; font-size: 16px; color: var(--ink-2); }
+  .mark {
+    width: 24px; height: 24px; border-radius: 50%; margin-top: 1px;
+    display: grid; place-items: center; font-size: 14px; font-weight: 800;
+  }
+  .mark.ok { background: var(--accent-soft); color: var(--accent); }
+  .mark.off { background: var(--off-soft); color: var(--off); }
+  .mark.skip, .mark.info { background: var(--surface-2); color: var(--muted); }
+  .checks .t { color: var(--muted); }
+  .small-print { margin-top: 14px; font-size: 15px; color: var(--muted); }
+
+  .week {
+    margin-top: 24px; padding: 18px 16px; border-radius: 16px;
+    background: var(--surface); color: var(--ink);
+    border: 1.5px dashed var(--gold);
+  }
+  .week p { font-size: 18px; font-family: var(--serif); line-height: 1.4; }
+  .result-actions { display: grid; gap: 10px; margin-top: 22px; }
+
+  footer { margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--line); }
+  .health { font-weight: 650; font-size: 17px; }
+  footer h2 { font-size: 20px; margin: 22px 0 10px; }
+  .sources { margin: 0; padding-left: 20px; font-size: 15px; color: var(--ink-2); }
+  .sources li + li { margin-top: 6px; }
+  .sources a { overflow-wrap: anywhere; }
+  .checked { margin-top: 14px; font-size: 14px; color: var(--muted); }
+
+  @media (min-width: 600px) {
+    .wrap { padding-top: 36px; }
+    .card { padding: 26px 24px 28px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; scroll-behavior: auto !important; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <header>
+    <div class="who">
+      <img class="ava" id="ava" alt="" width="56" height="56" src="data:image/jpeg;base64,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">
+      <div>
+        <p class="who-name">Серафим Покровский</p>
+        <p class="who-role">консультант по детскому режиму · персонаж ИИ</p>
+      </div>
+    </div>
+    <h1>Разбор дня</h1>
+    <p class="lede">Истерики, уроки до ночи, утром не добудиться? Часто это не характер, а сбитый режим. Три шага про вчерашний день, минуты две — и я покажу, где часы расходятся с нормами.</p>
+    <div class="honest">
+      <p><strong>Серафим — персонаж, созданный ИИ, он не врач. Расчёт — по открытым нормам: СанПиН 1.2.3685-21, методические рекомендации Роспотребнадзора МР 2.4.0331-23, рекомендации AASM. Данные не покидают ваш телефон.</strong></p>
+      <p class="privacy">Ответы считаются прямо на телефоне и нигде не сохраняются.</p>
+    </div>
+  </header>
+
+  <noscript><p class="card">Для расчёта нужен JavaScript. Он работает только на вашем телефоне и ничего не отправляет.</p></noscript>
+
+  <!-- АНКЕТА -->
+  <section class="card" id="quiz" aria-label="Три вопроса про вчерашний день">
+    <div class="progress">
+      <span class="progress-text" id="progressText">Шаг 1 из 3</span>
+      <span class="bars" aria-hidden="true"><span class="on"></span><span></span><span></span></span>
+    </div>
+
+    <!-- Шаг 1 -->
+    <div class="step" data-step="1">
+      <h2 tabindex="-1">Про ребёнка</h2>
+
+      <fieldset>
+        <legend id="l-grade">В каком классе?</legend>
+        <div class="chips cols-4" data-name="grade" role="group" aria-labelledby="l-grade">
+          <button type="button" class="chip" data-value="1" aria-pressed="false">1</button>
+          <button type="button" class="chip" data-value="2" aria-pressed="false">2</button>
+          <button type="button" class="chip" data-value="3" aria-pressed="false">3</button>
+          <button type="button" class="chip" data-value="4" aria-pressed="false">4</button>
+          <button type="button" class="chip" data-value="5" aria-pressed="false">5</button>
+          <button type="button" class="chip" data-value="6" aria-pressed="false">6</button>
+          <button type="button" class="chip" data-value="7" aria-pressed="false">7</button>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend id="l-shift">В какую смену учится?</legend>
+        <div class="chips cols-2" data-name="shift" role="group" aria-labelledby="l-shift">
+          <button type="button" class="chip small" data-value="1" aria-pressed="false">Первая</button>
+          <button type="button" class="chip small" data-value="2" aria-pressed="false">Вторая</button>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend id="l-age">Сколько полных лет?</legend>
+        <div class="chips cols-5" data-name="age" role="group" aria-labelledby="l-age">
+          <button type="button" class="chip" data-value="6" aria-pressed="false">6</button>
+          <button type="button" class="chip" data-value="7" aria-pressed="false">7</button>
+          <button type="button" class="chip" data-value="8" aria-pressed="false">8</button>
+          <button type="button" class="chip" data-value="9" aria-pressed="false">9</button>
+          <button type="button" class="chip" data-value="10" aria-pressed="false">10</button>
+          <button type="button" class="chip" data-value="11" aria-pressed="false">11</button>
+          <button type="button" class="chip" data-value="12" aria-pressed="false">12</button>
+          <button type="button" class="chip" data-value="13" aria-pressed="false">13</button>
+          <button type="button" class="chip" data-value="14" aria-pressed="false">14</button>
+        </div>
+      </fieldset>
+
+      <div class="err" role="alert"></div>
+      <div class="nav">
+        <button type="button" class="btn primary" data-next>Дальше</button>
+      </div>
+    </div>
+
+    <!-- Шаг 2 -->
+    <div class="step" data-step="2" hidden>
+      <h2 tabindex="-1">Вчерашний день</h2>
+      <p class="step-sub">Можно примерно. Если вчера был выходной — вспомните последний учебный день.</p>
+
+      <fieldset>
+        <legend>Уроки дома</legend>
+        <p class="hint" id="hint-g1" hidden>В 1 классе домашние задания не задают. Если всё же занимались — укажите время, если нет — отметьте ниже.</p>
+        <p class="hint" id="hint-s2" hidden>Укажите, когда делали уроки: утром до школы или вечером после.</p>
+        <div class="times">
+          <label class="time">
+            <span class="lbl">Сели за уроки</span>
+            <span class="field"><input type="time" id="hwStart" data-field="hwStart"><span class="ph" aria-hidden="true">--:--</span></span>
+          </label>
+          <label class="time">
+            <span class="lbl">Закончили</span>
+            <span class="field"><input type="time" id="hwEnd" data-field="hwEnd"><span class="ph" aria-hidden="true">--:--</span></span>
+          </label>
+        </div>
+        <button type="button" class="toggle" id="noHw" aria-pressed="false"><span class="box" aria-hidden="true">✓</span>Уроков вчера не было</button>
+      </fieldset>
+
+      <fieldset>
+        <label class="time">
+          <span class="q" style="display:block">Во сколько ребёнок уснул?</span>
+          <span class="hint" style="display:block">Если после полуночи — так и укажите, например 00:30.</span>
+          <span class="field"><input type="time" id="sleepAt" data-field="sleepAt"><span class="ph" aria-hidden="true">--:--</span></span>
+        </label>
+      </fieldset>
+
+      <div class="err" role="alert"></div>
+      <div class="nav">
+        <button type="button" class="btn ghost" data-back>Назад</button>
+        <button type="button" class="btn primary" data-next>Дальше</button>
+      </div>
+    </div>
+
+    <!-- Шаг 3 -->
+    <div class="step" data-step="3" hidden>
+      <h2 tabindex="-1">Утро и вечер</h2>
+      <p class="step-sub">Последний шаг. Два вопроса можно пропустить.</p>
+
+      <fieldset>
+        <label class="time">
+          <span class="q" style="display:block">Во сколько встаёт в будни?</span>
+          <span class="field"><input type="time" id="wakeAt" data-field="wakeAt"><span class="ph" aria-hidden="true">--:--</span></span>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend id="l-gadget">Телефон, планшет или телевизор — в последний час перед сном?</legend>
+        <p class="hint">По желанию. Нажмите ещё раз, чтобы снять ответ.</p>
+        <div class="chips cols-2" data-name="gadget" data-optional="true" role="group" aria-labelledby="l-gadget">
+          <button type="button" class="chip small" data-value="yes" aria-pressed="false">Да</button>
+          <button type="button" class="chip small" data-value="no" aria-pressed="false">Нет</button>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend id="l-club">Секция или кружок после школы — до скольки?</legend>
+        <p class="hint">По желанию.</p>
+        <div class="chips cols-3" data-name="club" data-optional="true" role="group" aria-labelledby="l-club">
+          <button type="button" class="chip small" data-value="none" aria-pressed="false">Нет</button>
+          <button type="button" class="chip small" data-value="before18" aria-pressed="false">До 18:00</button>
+          <button type="button" class="chip small" data-value="after18" aria-pressed="false">После 18:00</button>
+        </div>
+        <label class="time" id="clubEndWrap" hidden style="margin-top:12px">
+          <span class="lbl">Во сколько заканчивается (если знаете)?</span>
+          <span class="field"><input type="time" id="clubEnd" data-field="clubEnd"><span class="ph" aria-hidden="true">--:--</span></span>
+        </label>
+      </fieldset>
+
+      <div class="err" role="alert"></div>
+      <div class="nav">
+        <button type="button" class="btn ghost" data-back>Назад</button>
+        <button type="button" class="btn primary" data-next>Показать разбор</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- РЕЗУЛЬТАТ -->
+  <section class="card result" id="result" hidden aria-live="polite">
+    <h2 tabindex="-1" id="resultTitle">Разбор дня</h2>
+    <div id="resultBody"></div>
+
+    <p class="small-print">Это разбор одного дня. Если вчера был необычный вечер — пройдите ещё раз по обычному. Ответы о времени примерные, поэтому расхождения до 15 минут сбоем не считаются.</p>
+
+    <div class="honest">
+      <p><strong>Серафим — персонаж, созданный ИИ, он не врач. Расчёт — по открытым нормам: СанПиН 1.2.3685-21, методические рекомендации Роспотребнадзора МР 2.4.0331-23, рекомендации AASM. Данные не покидают ваш телефон.</strong></p>
+    </div>
+
+    <div class="week">
+      <p>Хотите, чтобы режим собрали под ваш график? Скоро — «Неделя режима»: личное расписание и неделя подстройки. Следите за профилем.</p>
+    </div>
+
+    <div class="result-actions">
+      <button type="button" class="btn ghost wide" id="edit">Поправить ответы</button>
+      <button type="button" class="btn ghost wide" id="restart">Разобрать другой день</button>
+    </div>
+  </section>
+
+  <footer>
+    <p class="health">Вопросы о здоровье — к педиатру.</p>
+
+    <h2>Источники</h2>
+    <ol class="sources">
+      <li><a href="http://publication.pravo.gov.ru/document/0001202505200002" target="_blank" rel="noopener noreferrer">СанПиН 1.2.3685-21, табл. 6.6 (ред. 17.03.2025)</a> — домашние задания по классам, окончание секций.</li>
+      <li><a href="https://faolex.fao.org/docs/pdf/rus215586.pdf" target="_blank" rel="noopener noreferrer">СанПиН 1.2.3685-21, табл. 6.7</a> — ночной сон по возрасту.</li>
+      <li><a href="https://legalacts.ru/doc/mr-240331-23-24-gigiena-detei-i-podrostkov-metodicheskie-rekomendatsii/" target="_blank" rel="noopener noreferrer">МР 2.4.0331-23 Роспотребнадзора</a> — отбой, экраны перед сном, когда садиться за уроки, вторая смена (пп. 4.6, 4.10, 4.11, 5.9).</li>
+      <li><a href="https://legalacts.ru/doc/prikaz-minprosveshchenija-rossii-ot-22032021-n-115-ob-utverzhdenii/" target="_blank" rel="noopener noreferrer">Приказ Минпросвещения № 115, п. 24</a> — в 1 классе обучение без домашних заданий; <a href="https://www.garant.ru/products/ipo/prime/doc/413712154/" target="_blank" rel="noopener noreferrer">письмо Минпросвещения № 03-320</a>.</li>
+      <li><a href="http://publication.pravo.gov.ru/document/0001202606020083" target="_blank" rel="noopener noreferrer">СП 2.4.2.4283-26</a> — смены (п. 27), окончание секций (п. 29).</li>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4877308/" target="_blank" rel="noopener noreferrer">AASM, Paruthi et al., 2016</a> — сон детей и подростков.</li>
+      <li><a href="https://sleepeducation.org/healthy-sleep/healthy-sleep-habits/" target="_blank" rel="noopener noreferrer">AASM, Healthy Sleep Habits</a> — устройства до сна.</li>
+    </ol>
+    <p class="checked">Нормы сверены с первоисточниками 13.10.2026. Для семьи это ориентиры, а не правила: страница сравнивает часы с нормами и ничего не оценивает.</p>
+  </footer>
+</main>
+
+<script src="analyze.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var A = window.Razbor;
+  var FIELD_STEP = { form: 1, grade: 1, shift: 1, age: 1, hwStart: 2, hwEnd: 2, sleepAt: 2, wakeAt: 3, gadget: 3, club: 3, clubEnd: 3 };
+
+  var state;
+  var step = 1;
+
+  function freshState() {
+    return { grade: null, shift: null, age: null, homework: true, hwStart: '', hwEnd: '', sleepAt: '', wakeAt: '', gadget: null, club: null, clubEnd: '' };
+  }
+
+  function $(s, r) { return (r || document).querySelector(s); }
+  function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+
+  function el(tag, attrs, kids) {
+    var n = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      if (k === 'class') n.className = attrs[k]; else n.setAttribute(k, attrs[k]);
+    });
+    (Array.isArray(kids) ? kids : (kids == null ? [] : [kids])).forEach(function (c) {
+      if (c == null) return;
+      n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+    });
+    return n;
+  }
+
+  // ---- аватар: если не загрузился — убираем
+  var ava = $('#ava');
+  ava.addEventListener('error', function () { ava.remove(); });
+
+  // ---- кнопки-варианты
+  function parseVal(name, raw) {
+    if (name === 'grade' || name === 'shift' || name === 'age') return Number(raw);
+    if (name === 'gadget') return raw === 'yes';
+    return raw;
+  }
+
+  $$('.chips').forEach(function (group) {
+    var name = group.getAttribute('data-name');
+    var optional = group.getAttribute('data-optional') === 'true';
+    group.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-value]');
+      if (!b) return;
+      var v = parseVal(name, b.getAttribute('data-value'));
+      state[name] = (optional && state[name] === v) ? null : v;
+      group.removeAttribute('aria-invalid');
+      sync();
+    });
+  });
+
+  // ---- поля времени
+  $$('input[type="time"]').forEach(function (inp) {
+    var f = inp.getAttribute('data-field');
+    function upd() {
+      state[f] = inp.value || '';
+      inp.parentNode.classList.toggle('has-value', !!inp.value);
+      inp.removeAttribute('aria-invalid');
+    }
+    inp.addEventListener('input', upd);
+    inp.addEventListener('change', upd);
+  });
+
+  $('#noHw').addEventListener('click', function () {
+    state.homework = !state.homework;
+    sync();
+  });
+
+  function sync() {
+    $$('.chips').forEach(function (group) {
+      var name = group.getAttribute('data-name');
+      $$('button[data-value]', group).forEach(function (b) {
+        b.setAttribute('aria-pressed', String(state[name] === parseVal(name, b.getAttribute('data-value'))));
+      });
+    });
+    var noHw = !state.homework;
+    $('#noHw').setAttribute('aria-pressed', String(noHw));
+    ['hwStart', 'hwEnd'].forEach(function (id) {
+      var inp = $('#' + id);
+      inp.disabled = noHw;
+      inp.parentNode.classList.toggle('is-disabled', noHw);
+    });
+    $('#hint-g1').hidden = state.grade !== 1;
+    $('#hint-s2').hidden = state.shift !== 2 || state.grade === 1;
+    $('#clubEndWrap').hidden = state.club !== 'after18';
+    $$('input[type="time"]').forEach(function (inp) {
+      inp.value = state[inp.getAttribute('data-field')] || '';
+      inp.parentNode.classList.toggle('has-value', !!inp.value);
+    });
+  }
+
+  // ---- шаги
+  function buildInput() {
+    return {
+      grade: state.grade, shift: state.shift, age: state.age,
+      homework: state.homework,
+      hwStart: state.homework ? state.hwStart : null,
+      hwEnd: state.homework ? state.hwEnd : null,
+      sleepAt: state.sleepAt, wakeAt: state.wakeAt,
+      gadget: state.gadget, club: state.club,
+      clubEnd: state.club === 'after18' ? state.clubEnd : null
+    };
+  }
+
+  function showErrors(n, errs) {
+    var box = $('.step[data-step="' + n + '"] .err');
+    box.textContent = '';
+    errs.forEach(function (e) {
+      box.appendChild(el('p', null, e.message));
+      var inp = $('#' + e.field);
+      if (inp && inp.tagName === 'INPUT') inp.setAttribute('aria-invalid', 'true');
+      var grp = $('.chips[data-name="' + e.field + '"]');
+      if (grp) grp.setAttribute('aria-invalid', 'true');
+    });
+  }
+
+  function goTo(n) {
+    step = n;
+    $$('.step').forEach(function (s) { s.hidden = Number(s.getAttribute('data-step')) !== n; });
+    $('#progressText').textContent = 'Шаг ' + n + ' из 3';
+    $$('.bars span').forEach(function (b, i) { b.classList.toggle('on', i < n); });
+    var quiz = $('#quiz');
+    var top = quiz.getBoundingClientRect().top + window.pageYOffset - 12;
+    if (window.pageYOffset > top) window.scrollTo(0, top);
+    var h = $('.step[data-step="' + n + '"] h2');
+    if (h) h.focus({ preventScroll: true });
+  }
+
+  $$('[data-next]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var r = A.analyzeDay(buildInput());
+      var errs = r.ok ? [] : r.errors;
+      var here = errs.filter(function (e) { return (FIELD_STEP[e.field] || 1) <= step; });
+      if (step < 3) {
+        if (here.length) {
+          var first = Math.min.apply(null, here.map(function (e) { return FIELD_STEP[e.field] || 1; }));
+          if (first !== step) goTo(first);
+          showErrors(first, here.filter(function (e) { return (FIELD_STEP[e.field] || 1) === first; }));
+          return;
+        }
+        showErrors(step, []);
+        goTo(step + 1);
+        return;
+      }
+      if (!r.ok) {
+        var minStep = Math.min.apply(null, errs.map(function (e) { return FIELD_STEP[e.field] || 1; }));
+        goTo(minStep);
+        showErrors(minStep, errs.filter(function (e) { return (FIELD_STEP[e.field] || 1) === minStep; }));
+        return;
+      }
+      showErrors(3, []);
+      renderResult(r);
+    });
+  });
+
+  $$('[data-back]').forEach(function (b) {
+    b.addEventListener('click', function () { if (step > 1) goTo(step - 1); });
+  });
+
+  // ---- результат
+  function plural(n, one, few, many) {
+    var n10 = n % 10, n100 = n % 100;
+    if (n10 === 1 && n100 !== 11) return one;
+    if (n10 >= 2 && n10 <= 4 && (n100 < 12 || n100 > 14)) return few;
+    return many;
+  }
+
+  function sourcesLine(list) {
+    var p = el('p', { class: 'src' }, 'Источник: ');
+    list.forEach(function (s, i) {
+      if (i) p.appendChild(document.createTextNode('; '));
+      p.appendChild(el('a', { href: s.url, target: '_blank', rel: 'noopener noreferrer' }, s.label));
+    });
+    return p;
+  }
+
+  var MARK = { ok: '✓', off: '!', skip: '–', info: '–' };
+
+  function renderResult(r) {
+    var body = $('#resultBody');
+    body.textContent = '';
+
+    body.appendChild(el('p', { class: 'profile' }, r.profile));
+    body.appendChild(el('p', { class: 'facts' }, 'Вчера: ' + r.facts.join(' · ')));
+    r.notices.forEach(function (n) { body.appendChild(el('div', { class: 'notice' }, n)); });
+
+    if (r.allGood) {
+      body.appendChild(el('div', { class: 'good' }, [
+        el('h3', null, r.headline),
+        el('p', null, 'Всё, что сверили, — в пределах ориентиров. Можно выдохнуть.')
+      ]));
+    } else {
+      body.appendChild(el('h3', { class: 'sec' }, 'Где сбой'));
+      var ol = el('ol', { class: 'issues' });
+      r.issues.forEach(function (it, i) {
+        ol.appendChild(el('li', { class: 'issue' }, [
+          el('span', { class: 'num', 'aria-hidden': 'true' }, String(i + 1)),
+          el('h3', null, it.title),
+          el('div', { class: 'row' }, [el('span', { class: 'k' }, 'Было'), el('span', { class: 'v' }, it.was)]),
+          el('div', { class: 'row target' }, [el('span', { class: 'k' }, 'Ориентир'), el('span', { class: 'v' }, it.target)]),
+          it.note ? el('p', { class: 'note' }, it.note) : null,
+          sourcesLine(it.sources)
+        ]));
+      });
+      body.appendChild(ol);
+      if (r.moreIssues > 0) {
+        body.appendChild(el('p', { class: 'more' }, 'Есть ещё ' + r.moreIssues + ' ' +
+          plural(r.moreIssues, 'расхождение', 'расхождения', 'расхождений') + ' помельче — в списке «Что сверили» ниже.'));
+      }
+      if (r.teacherNote) {
+        body.appendChild(el('div', { class: 'teacher' }, [el('strong', null, 'Честно. '), r.teacherNote]));
+      }
+      body.appendChild(el('p', { class: 'guilt' }, r.guiltLine));
+    }
+
+    body.appendChild(el('div', { class: 'action' }, [
+      el('p', { class: 'kicker' }, 'Одно дело на сегодня'),
+      el('p', { class: 'action-text' }, r.action.text)
+    ]));
+
+    body.appendChild(el('h3', { class: 'sec' }, 'Что сверили'));
+    var ul = el('ul', { class: 'checks' });
+    r.checks.forEach(function (c) {
+      var line = [el('strong', null, c.label + ': '), c.value];
+      if (c.target) line.push(el('span', { class: 't' }, ' · ориентир: ' + c.target));
+      // значок — только для глаз; дикторам читаем статус словами
+      ul.appendChild(el('li', null, [
+        el('span', { class: 'mark ' + c.status, 'aria-hidden': 'true' }, MARK[c.status]),
+        el('span', null, [el('span', { class: 'sr-only' }, c.status === 'ok' ? 'сходится. ' : (c.status === 'off' ? 'расходится. ' : 'не сверяли. '))].concat(line))
+      ]));
+    });
+    body.appendChild(ul);
+
+    $('#quiz').hidden = true;
+    var res = $('#result');
+    res.hidden = false;
+    var top = res.getBoundingClientRect().top + window.pageYOffset - 12;
+    window.scrollTo(0, top);
+    $('#resultTitle').focus({ preventScroll: true });
+  }
+
+  $('#edit').addEventListener('click', function () {
+    $('#result').hidden = true;
+    $('#quiz').hidden = false;
+    goTo(1);
+  });
+
+  $('#restart').addEventListener('click', function () {
+    state = freshState();
+    sync();
+    $$('.err').forEach(function (e) { e.textContent = ''; });
+    $('#result').hidden = true;
+    $('#quiz').hidden = false;
+    goTo(1);
+  });
+
+  state = freshState();
+  sync();
+})();
+</script>
+</body>
+</html>
